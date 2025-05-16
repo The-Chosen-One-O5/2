@@ -3,40 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Focus Session Timer | Palette</title>
+    <title>Focus Session Timer | Palette & Song Choice</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-body: #000000;
-            --bg-container: #1c1c1e; /* Very dark grey, slightly off-black */
+            --bg-container: #1c1c1e; 
 
             --color-rose-taupe: #785964;
             --color-cambridge-blue: #82A7A6;
             --color-sky-blue: #9ED0E6;
             --color-rose-quartz: #B796AC;
 
-            --primary-text-color: var(--color-rose-quartz); /* For general text */
+            --primary-text-color: var(--color-rose-quartz);
             --heading-color: var(--color-sky-blue);
             --timer-color: var(--color-sky-blue);
             --phase-loop-text-color: var(--color-cambridge-blue);
 
-
             --button-bg-default: var(--color-cambridge-blue);
-            --button-text-default: #000000; /* Black text for contrast */
-            --button-bg-default-hover: #9bc4c3; /* Lighter Cambridge Blue */
+            --button-text-default: #000000;
+            --button-bg-default-hover: #9bc4c3;
 
             --button-bg-start: var(--color-rose-taupe);
             --button-text-start: var(--color-sky-blue);
-            --button-bg-start-hover: #8c6f7c; /* Lighter Rose Taupe */
+            --button-bg-start-hover: #8c6f7c;
             
-            --button-bg-other: var(--color-rose-quartz); /* For back/stop buttons */
-            --button-text-other: #000000;
-            --button-bg-other-hover: #c9a8bd; /* Lighter Rose Quartz */
-
+            --button-bg-control: var(--color-rose-quartz); /* For pause, stop, change song */
+            --button-text-control: #000000;
+            --button-bg-control-hover: #c9a8bd;
 
             --input-border-color: var(--color-cambridge-blue);
             --input-text-color: var(--color-sky-blue);
-            --input-bg-color: #101010; /* Darker than container for input bg */
+            --input-bg-color: #101010; 
 
             --fullscreen-text-color: #FFFFFF; 
 
@@ -61,11 +59,11 @@
         #app-container {
             background-color: var(--bg-container);
             padding: 30px 40px;
-            border-radius: 15px; /* Slightly less rounded */
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); /* Simple shadow, no glow */
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); 
             width: 90%;
             max-width: 650px;
-            border: 2px solid var(--color-rose-taupe); /* Use one of the palette colors for border */
+            border: 2px solid var(--color-rose-taupe); 
             position: relative; 
         }
         
@@ -86,7 +84,7 @@
 
         h1, h2 {
             color: var(--heading-color);
-            text-shadow: none; /* Removed glow */
+            text-shadow: none;
             margin-bottom: 25px;
         }
         h1 { font-size: 1.8em; }
@@ -94,18 +92,18 @@
 
         button {
             font-family: var(--font-pixel);
-            color: var(--button-text-default); /* Default text color */
-            background-color: var(--button-bg-default); /* Default background */
+            color: var(--button-text-default); 
+            background-color: var(--button-bg-default);
             border: none;
-            padding: 15px 25px; 
-            margin: 10px 5px;
+            padding: 12px 20px; /* Slightly reduced padding for more buttons */
+            margin: 8px 4px; /* Adjusted margin */
             border-radius: 8px;
             cursor: pointer;
             transition: background-color 0.2s, transform 0.15s, box-shadow 0.2s;
-            font-size: 0.9em;
+            font-size: 0.85em; /* Slightly smaller for more buttons */
             letter-spacing: 1px;
-            box-shadow: 0 3px 5px rgba(0,0,0,0.25); /* Simpler shadow */
-            text-shadow: none; /* Removed text glow from button */
+            box-shadow: 0 3px 5px rgba(0,0,0,0.25);
+            text-shadow: none;
         }
 
         button:hover {
@@ -120,28 +118,29 @@
         }
 
         button:disabled {
-            background-color: #444; /* Darker grey for disabled */
+            background-color: #444; 
             color: #888;
             cursor: not-allowed;
             box-shadow: 0 3px 5px rgba(0,0,0,0.15);
             transform: translateY(0);
         }
         
-        /* Specific button styles */
         #start-button {
             background-color: var(--button-bg-start);
             color: var(--button-text-start);
+            padding: 15px 25px; /* Keep start button larger */
+            font-size: 0.9em;
         }
         #start-button:hover {
             background-color: var(--button-bg-start-hover);
         }
 
-        #back-to-session-select, #stop-button, #pause-resume-button {
-             background-color: var(--button-bg-other);
-             color: var(--button-text-other);
+        #back-to-session-select, #stop-button, #pause-resume-button, #change-song-button {
+             background-color: var(--button-bg-control);
+             color: var(--button-text-control);
         }
-        #back-to-session-select:hover, #stop-button:hover, #pause-resume-button:hover {
-            background-color: var(--button-bg-other-hover);
+        #back-to-session-select:hover, #stop-button:hover, #pause-resume-button:hover, #change-song-button:hover {
+            background-color: var(--button-bg-control-hover);
         }
 
 
@@ -156,7 +155,7 @@
             width: 100px;
             text-align: center;
             font-size: 1em;
-            box-shadow: inset 0 0 5px rgba(0,0,0, 0.2); /* Subtle inset shadow */
+            box-shadow: inset 0 0 5px rgba(0,0,0, 0.2);
         }
 
         #session-options button {
@@ -165,27 +164,35 @@
             margin: 12px;
         }
         
+        #timer-controls {
+            display: flex;
+            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+            justify-content: center;
+            align-items: center;
+        }
+
         @media (max-width: 600px) {
             #session-options button {
                 width: calc(100% - 24px); 
             }
             h1 { font-size: 1.5em; }
+            button { font-size: 0.8em; padding: 10px 15px;} /* Adjust button size on mobile */
+            #start-button { font-size: 0.85em; padding: 12px 20px; }
+
         }
 
         #timer-display {
             font-size: 4em; 
             margin: 25px 0;
             color: var(--timer-color);
-            text-shadow: none; /* Removed glow */
-            /* animation: pulseTimer 1.5s infinite alternate ease-in-out; */ /* Removed pulse animation as per "no glow" */
+            text-shadow: none;
         }
-        /* Removed pulseTimer keyframes */
 
         #current-phase-display, #current-loop-display {
             font-size: 1.3em;
             margin-bottom: 12px;
             color: var(--phase-loop-text-color);
-            text-shadow: none; /* Removed glow */
+            text-shadow: none;
         }
 
         #fullscreen-message-overlay {
@@ -194,7 +201,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 1); /* Pure black overlay */
+            background-color: rgba(0, 0, 0, 1); 
             display: none; 
             flex-direction: column;
             align-items: center;
@@ -215,7 +222,7 @@
             font-size: 2em; 
             max-width: 80%;
             line-height: 1.6;
-            text-shadow: none; /* Removed glow */
+            text-shadow: none;
         }
         @media (max-width: 768px) {
             #fullscreen-text {
@@ -246,9 +253,10 @@
             <h2 id="current-phase-display">Phase</h2>
             <div id="timer-display">00:00</div>
             <div id="current-loop-display">Loop 0/0</div>
-            <div>
+            <div id="timer-controls">
                 <button id="pause-resume-button">Pause</button>
                 <button id="stop-button">Stop Session</button>
+                <button id="change-song-button" style="display:none;">Change Song</button>
             </div>
         </div>
     </div>
@@ -279,6 +287,7 @@
         const currentLoopDisplay = document.getElementById('current-loop-display');
         const pauseResumeButton = document.getElementById('pause-resume-button');
         const stopButton = document.getElementById('stop-button');
+        const changeSongButton = document.getElementById('change-song-button'); // New button
 
         const fullscreenMessageOverlay = document.getElementById('fullscreen-message-overlay');
         const fullscreenText = document.getElementById('fullscreen-text');
@@ -317,6 +326,7 @@
         const BREAK_DURATION_SECONDS = 15 * 60;
         // const GET_READY_DURATION_SECONDS = 3; // Test
         // const BREAK_DURATION_SECONDS = 4; // Test
+        // const POMODORO_TEST_DURATION = 5; // Test
         const TYPEWRITER_SPEED = 70; 
 
         const sessionDefinitions = [
@@ -337,11 +347,12 @@
             populateSessionButtons();
             startButton.addEventListener('click', handleStartFullSession);
             backToSessionSelectButton.addEventListener('click', () => {
-                handleStopSession(); // Ensure state is reset if going back
+                handleStopSession(); 
                 showScreen(initialScreen);
             });
             pauseResumeButton.addEventListener('click', togglePauseResume);
             stopButton.addEventListener('click', handleStopSession);
+            changeSongButton.addEventListener('click', handleChangeSong); // Add listener
 
             audioElements.breakOver.preload = "auto";
             audioElements.breakStart.preload = "auto";
@@ -369,19 +380,34 @@
 
         function goFullScreen() {
             const elem = document.documentElement;
-            if (elem.requestFullscreen) {
-                elem.requestFullscreen().catch(err => {});
+            if (elem.requestFullscreen) { elem.requestFullscreen().catch(err => {});
             } else if (elem.mozRequestFullScreen) { elem.mozRequestFullScreen();
             } else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen();
             } else if (elem.msRequestFullscreen) { elem.msRequestFullscreen(); }
         }
         
         function exitFullScreen() {
-            if (document.exitFullscreen) { document.exitFullscreen();
-            } else if (document.mozCancelFullScreen) { document.mozCancelFullScreen();
-            } else if (document.webkitExitFullscreen) { document.webkitExitFullscreen();
-            } else if (document.msExitFullscreen) { document.msExitFullscreen(); }
+            if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) {
+                if (document.exitFullscreen) { document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) { document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) { document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) { document.msExitFullscreen(); }
+            }
         }
+        
+        // --- Song Change Handler ---
+        function handleChangeSong() {
+            if (isPaused) return; // Don't change song if paused
+
+            if (currentPhase === 'pomodoro' && sessionMusicTracks.length > 0) {
+                stopAudio(audioElements.sessionMusic);
+                playSessionMusic();
+            } else if (currentPhase === 'break' && breakMusicTracks.length > 0) {
+                stopAudio(audioElements.breakMusic);
+                playBreakMusic();
+            }
+        }
+
 
         // --- Main Flow Control ---
         function handleStartFullSession() {
@@ -394,6 +420,8 @@
             currentLoopNumber = 0;
             isPaused = false;
             pauseResumeButton.textContent = "Pause";
+            pauseResumeButton.disabled = false;
+            changeSongButton.style.display = 'none'; // Initially hide
 
             goFullScreen(); 
             showScreen(timerScreen);
@@ -407,6 +435,7 @@
             updateLoopDisplay();
             stopAllBackgroundMusic();
             playAudio(audioElements.getReady);
+            changeSongButton.style.display = 'none';
             startTimer(onGetReadyEnd);
         }
 
@@ -427,25 +456,27 @@
 
         function startPomodoroPhase() {
             currentPhase = 'pomodoro';
+            // timeLeftSeconds = POMODORO_TEST_DURATION || (selectedSessionMinutes * 60); // For quick testing
             timeLeftSeconds = selectedSessionMinutes * 60;
-            // timeLeftSeconds = 5; // Test
             updatePhaseDisplay(`Session ${currentLoopNumber}`);
             stopAllBackgroundMusic();
             playSessionMusic();
+            changeSongButton.style.display = sessionMusicTracks.length > 1 ? 'inline-block' : 'none'; // Show if multiple songs
             startTimer(onPomodoroEnd);
         }
 
         function onPomodoroEnd() {
             stopAudio(audioElements.sessionMusic);
-            if (currentLoopNumber <= totalLoops) { // Check if it's the last loop or not
+            changeSongButton.style.display = 'none';
+            if (currentLoopNumber <= totalLoops) {
                  showBreakStartMessage();
             }
-            // If it was the last pomodoro of the last loop, finishEntireSession will be called by startNextLoopCycle
         }
 
         function showBreakStartMessage() {
             currentPhase = 'message';
             updatePhaseDisplay("Break Incoming");
+            changeSongButton.style.display = 'none';
             playAudio(audioElements.breakStart);
             showFullScreenMessageView("Break Time! Have some rest.", () => {});
             audioElements.breakStart.onended = () => {
@@ -460,12 +491,14 @@
             updatePhaseDisplay("Break Time");
             stopAllBackgroundMusic();
             playBreakMusic();
+            changeSongButton.style.display = breakMusicTracks.length > 1 ? 'inline-block' : 'none'; // Show if multiple songs
             startTimer(onBreakEnd);
         }
 
         function onBreakEnd() {
             stopAudio(audioElements.breakMusic);
-            if (currentLoopNumber >= totalLoops) { // If this break was after the last pomodoro
+            changeSongButton.style.display = 'none';
+            if (currentLoopNumber >= totalLoops) {
                 finishEntireSession();
             } else {
                 showBreakOverMessage();
@@ -475,17 +508,19 @@
         function showBreakOverMessage() {
             currentPhase = 'message';
             updatePhaseDisplay("Work Incoming");
+            changeSongButton.style.display = 'none';
             playAudio(audioElements.breakOver);
             showFullScreenMessageView("Break is over. Get back to study!", () => {});
              audioElements.breakOver.onended = () => {
                 hideFullScreenMessageView();
-                startNextLoopCycle(); // This will increment loop and start next pomodoro
+                startNextLoopCycle(); 
             };
         }
 
         function finishEntireSession() {
             currentPhase = 'idle';
             stopAllAudio();
+            changeSongButton.style.display = 'none';
             updateTimerDisplayValue(0);
             updatePhaseDisplay("Session Complete!");
             currentLoopDisplay.textContent = "All loops finished!";
@@ -504,15 +539,14 @@
             currentPhase = 'idle';
             isPaused = false;
             stopAllAudio();
+            changeSongButton.style.display = 'none';
             hideFullScreenMessageView(); 
-            showScreen(initialScreen); // Always go back to initial screen on stop
-            if (document.fullscreenElement) { // Only exit if in fullscreen
-                 exitFullScreen();
-            }
+            showScreen(initialScreen); 
+            exitFullScreen(); 
             updateTimerDisplayValue(0);
-            currentPhaseDisplay.textContent = "Session Timer"; // Reset default title
+            currentPhaseDisplay.textContent = "Session Timer"; 
             currentLoopDisplay.textContent = "";
-            selectedSessionMinutes = 0; // Reset selection
+            selectedSessionMinutes = 0; 
             totalLoops = 0;
             currentLoopNumber = 0;
         }
@@ -538,7 +572,7 @@
         }
 
         function togglePauseResume() {
-            if (currentPhase === 'message' || currentPhase === 'idle') return; // Don't allow pause during messages
+            if (currentPhase === 'message' || currentPhase === 'idle') return; 
 
             if (isPaused) {
                 isPaused = false;
@@ -546,12 +580,14 @@
                 if (currentPhase === 'getReady' && audioElements.getReady.paused) playAudio(audioElements.getReady, true);
                 else if (currentPhase === 'pomodoro' && audioElements.sessionMusic.paused) playAudio(audioElements.sessionMusic, true);
                 else if (currentPhase === 'break' && audioElements.breakMusic.paused) playAudio(audioElements.breakMusic, true);
+                changeSongButton.disabled = false; // Re-enable change song button on resume
             } else {
                 isPaused = true;
                 pauseResumeButton.textContent = "Resume";
                 if (currentPhase === 'getReady') audioElements.getReady.pause();
                 else if (currentPhase === 'pomodoro') audioElements.sessionMusic.pause();
                 else if (currentPhase === 'break') audioElements.breakMusic.pause();
+                changeSongButton.disabled = true; // Disable change song button when paused
             }
         }
         
@@ -608,9 +644,9 @@
         }
 
         // --- Audio Control ---
-        function playAudio(audioElement, resume = false) { // Added resume flag
+        function playAudio(audioElement, resume = false) { 
             if (audioElement) {
-                if(!resume) audioElement.currentTime = 0; // Only reset time if not resuming
+                if(!resume) audioElement.currentTime = 0; 
                 audioElement.play().catch(error => {
                     if (error.name === "NotAllowedError") {
                         console.warn("Audio autoplay was prevented.");
@@ -636,6 +672,8 @@
                 audioElements.sessionMusic.src = sessionMusicTracks[currentSessionMusicIndex];
                 playAudio(audioElements.sessionMusic);
                 currentSessionMusicIndex = (currentSessionMusicIndex + 1) % sessionMusicTracks.length;
+            } else {
+                changeSongButton.style.display = 'none'; // Ensure hidden if no tracks
             }
         }
         function playBreakMusic() {
@@ -643,6 +681,8 @@
                 audioElements.breakMusic.src = breakMusicTracks[currentBreakMusicIndex];
                 playAudio(audioElements.breakMusic);
                 currentBreakMusicIndex = (currentBreakMusicIndex + 1) % breakMusicTracks.length;
+            } else {
+                 changeSongButton.style.display = 'none'; // Ensure hidden if no tracks
             }
         }
 
