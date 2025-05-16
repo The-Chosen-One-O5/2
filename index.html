@@ -3,386 +3,651 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minimalist Pomodoro</title>
+    <title>Focus Session Timer | Palette</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+        :root {
+            --bg-body: #000000;
+            --bg-container: #1c1c1e; /* Very dark grey, slightly off-black */
+
+            --color-rose-taupe: #785964;
+            --color-cambridge-blue: #82A7A6;
+            --color-sky-blue: #9ED0E6;
+            --color-rose-quartz: #B796AC;
+
+            --primary-text-color: var(--color-rose-quartz); /* For general text */
+            --heading-color: var(--color-sky-blue);
+            --timer-color: var(--color-sky-blue);
+            --phase-loop-text-color: var(--color-cambridge-blue);
+
+
+            --button-bg-default: var(--color-cambridge-blue);
+            --button-text-default: #000000; /* Black text for contrast */
+            --button-bg-default-hover: #9bc4c3; /* Lighter Cambridge Blue */
+
+            --button-bg-start: var(--color-rose-taupe);
+            --button-text-start: var(--color-sky-blue);
+            --button-bg-start-hover: #8c6f7c; /* Lighter Rose Taupe */
+            
+            --button-bg-other: var(--color-rose-quartz); /* For back/stop buttons */
+            --button-text-other: #000000;
+            --button-bg-other-hover: #c9a8bd; /* Lighter Rose Quartz */
+
+
+            --input-border-color: var(--color-cambridge-blue);
+            --input-text-color: var(--color-sky-blue);
+            --input-bg-color: #101010; /* Darker than container for input bg */
+
+            --fullscreen-text-color: #FFFFFF; 
+
+            --font-pixel: 'Press Start 2P', cursive;
+        }
 
         body {
+            font-family: var(--font-pixel);
+            background-color: var(--bg-body);
+            color: var(--primary-text-color);
             margin: 0;
-            font-family: 'Inter', sans-serif;
-            background-color: #1a1a1a;
-            color: #ffffff;
+            padding: 20px;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            height: 100vh;
-            transition: background-color 0.3s ease;
-        }
-
-        .container {
+            justify-content: center;
+            min-height: 100vh;
             text-align: center;
-            background: #252525;
-            padding: 2rem;
-            border-radius: 10px;
-            border: 1px solid #333;
+            overflow-x: hidden;
         }
 
-        .timer {
-            font-size: 4rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            letter-spacing: 2px;
+        #app-container {
+            background-color: var(--bg-container);
+            padding: 30px 40px;
+            border-radius: 15px; /* Slightly less rounded */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); /* Simple shadow, no glow */
+            width: 90%;
+            max-width: 650px;
+            border: 2px solid var(--color-rose-taupe); /* Use one of the palette colors for border */
+            position: relative; 
         }
+        
+        .screen {
+            opacity: 1;
+            transform: scale(1);
+            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+            width: 100%; 
+        }
+        .screen.hidden {
+            opacity: 0;
+            transform: scale(0.95);
+            pointer-events: none; 
+            position: absolute; 
+            top: 0;
+            left: 0;
+        }
+
+        h1, h2 {
+            color: var(--heading-color);
+            text-shadow: none; /* Removed glow */
+            margin-bottom: 25px;
+        }
+        h1 { font-size: 1.8em; }
+        h2 { font-size: 1.5em; }
 
         button {
-            padding: 10px 20px;
-            margin: 5px;
+            font-family: var(--font-pixel);
+            color: var(--button-text-default); /* Default text color */
+            background-color: var(--button-bg-default); /* Default background */
             border: none;
-            border-radius: 5px;
-            background: #3b82f6;
-            color: #ffffff;
+            padding: 15px 25px; 
+            margin: 10px 5px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
-            font-weight: 400;
+            transition: background-color 0.2s, transform 0.15s, box-shadow 0.2s;
+            font-size: 0.9em;
+            letter-spacing: 1px;
+            box-shadow: 0 3px 5px rgba(0,0,0,0.25); /* Simpler shadow */
+            text-shadow: none; /* Removed text glow from button */
         }
 
         button:hover {
-            background: #2563eb;
+            background-color: var(--button-bg-default-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 8px rgba(0,0,0,0.3);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 3px rgba(0,0,0,0.3);
         }
 
-        #settings {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: #252525;
-            padding: 2rem;
-            border-radius: 10px;
-            border: 1px solid #333;
-            z-index: 100;
+        button:disabled {
+            background-color: #444; /* Darker grey for disabled */
+            color: #888;
+            cursor: not-allowed;
+            box-shadow: 0 3px 5px rgba(0,0,0,0.15);
+            transform: translateY(0);
+        }
+        
+        /* Specific button styles */
+        #start-button {
+            background-color: var(--button-bg-start);
+            color: var(--button-text-start);
+        }
+        #start-button:hover {
+            background-color: var(--button-bg-start-hover);
         }
 
-        #nudge-screen {
-            display: none;
+        #back-to-session-select, #stop-button, #pause-resume-button {
+             background-color: var(--button-bg-other);
+             color: var(--button-text-other);
+        }
+        #back-to-session-select:hover, #stop-button:hover, #pause-resume-button:hover {
+            background-color: var(--button-bg-other-hover);
+        }
+
+
+        input[type="number"] {
+            font-family: var(--font-pixel);
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border: 2px solid var(--input-border-color);
+            background-color: var(--input-bg-color);
+            color: var(--input-text-color);
+            width: 100px;
+            text-align: center;
+            font-size: 1em;
+            box-shadow: inset 0 0 5px rgba(0,0,0, 0.2); /* Subtle inset shadow */
+        }
+
+        #session-options button {
+            display: inline-block;
+            width: calc(50% - 24px); 
+            margin: 12px;
+        }
+        
+        @media (max-width: 600px) {
+            #session-options button {
+                width: calc(100% - 24px); 
+            }
+            h1 { font-size: 1.5em; }
+        }
+
+        #timer-display {
+            font-size: 4em; 
+            margin: 25px 0;
+            color: var(--timer-color);
+            text-shadow: none; /* Removed glow */
+            /* animation: pulseTimer 1.5s infinite alternate ease-in-out; */ /* Removed pulse animation as per "no glow" */
+        }
+        /* Removed pulseTimer keyframes */
+
+        #current-phase-display, #current-loop-display {
+            font-size: 1.3em;
+            margin-bottom: 12px;
+            color: var(--phase-loop-text-color);
+            text-shadow: none; /* Removed glow */
+        }
+
+        #fullscreen-message-overlay {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(255, 255, 255, 0.95);
-            color: #1a1a1a;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 1); /* Pure black overlay */
+            display: none; 
             flex-direction: column;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
             z-index: 1000;
-            text-align: center;
-            transition: transform 0.5s ease;
+            color: var(--fullscreen-text-color);
+            padding: 20px;
+            box-sizing: border-box;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+        #fullscreen-message-overlay.visible {
+            display: flex;
+            opacity: 1;
         }
 
-        #nudge-screen h1 {
-            font-size: 2.5rem;
-            font-weight: 600;
-            margin-bottom: 2rem;
+        #fullscreen-text {
+            font-size: 2em; 
             max-width: 80%;
+            line-height: 1.6;
+            text-shadow: none; /* Removed glow */
         }
-
-        .nudge-btn {
-            font-size: 1.2rem;
-            padding: 15px 30px;
-            margin: 10px;
-            border-radius: 5px;
-        }
-
-        #red-btn {
-            background: #ef4444;
-            color: #ffffff;
-        }
-
-        #red-btn:hover {
-            background: #dc2626;
-        }
-
-        #green-btn {
-            background: #22c55e;
-            color: #ffffff;
-        }
-
-        #green-btn:hover {
-            background: #16a34a;
-        }
-
-        input, select {
-            padding: 8px;
-            margin: 5px;
-            border-radius: 5px;
-            border: 1px solid #444;
-            background: #333;
-            color: #fff;
-            font-family: 'Inter', sans-serif;
-        }
-
-        label {
-            font-weight: 400;
-            margin-top: 10px;
-            display: block;
-        }
-
-        #distraction-log {
-            margin-top: 1rem;
-            font-size: 0.9rem;
-            color: #a1a1a1;
-            max-height: 100px;
-            overflow-y: auto;
-        }
-
-        .nudge-slide-in {
-            transform: translateY(0);
-        }
-
-        .nudge-slide-out {
-            transform: translateY(-100vh);
-        }
-
-        .nudge-zoom-in {
-            transform: scale(1);
-        }
-
-        .nudge-zoom-out {
-            transform: scale(0);
+        @media (max-width: 768px) {
+            #fullscreen-text {
+                font-size: 1.5em;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="timer" id="timer">25:00</div>
-        <button onclick="startTimer()">Start</button>
-        <button onclick="resetTimer()">Reset</button>
-        <button onclick="toggleSettings()">Settings</button>
-        <div id="distraction-log"></div>
+    <div id="app-container">
+        <div id="initial-screen" class="screen">
+            <h1>Focus Session Timer</h1>
+            <p>Select session duration:</p>
+            <div id="session-options">
+                <!-- Session buttons populated by JS -->
+            </div>
+        </div>
+
+        <div id="loop-selection" class="screen hidden">
+            <h2>Configure Loops</h2>
+            <label for="loop-count">Number of Loops (1-50):</label><br>
+            <input type="number" id="loop-count" min="1" max="50" value="1"><br>
+            <button id="start-button">Start Full Session</button>
+            <button id="back-to-session-select">Change Session</button>
+        </div>
+
+        <div id="timer-screen" class="screen hidden">
+            <h2 id="current-phase-display">Phase</h2>
+            <div id="timer-display">00:00</div>
+            <div id="current-loop-display">Loop 0/0</div>
+            <div>
+                <button id="pause-resume-button">Pause</button>
+                <button id="stop-button">Stop Session</button>
+            </div>
+        </div>
     </div>
 
-    <div id="settings">
-        <h2>Settings</h2>
-        <label>Work Duration (min):</label>
-        <input type="number" id="workDuration" value="25" min="1">
-        <label>Break Duration (min):</label>
-        <input type="number" id="breakDuration" value="5" min="1">
-        <label>Study Topic:</label>
-        <input type="text" id="studyTopic" placeholder="e.g., Calculus">
-        <label>Nudge Interval (min):</label>
-        <input type="number" id="nudgeInterval" value="20" min="1">
-        <label>Nudge Effect:</label>
-        <select id="nudgeEffect">
-            <option value="slide">Slide In</option>
-            <option value="zoom">Zoom In</option>
-        </select>
-        <label>Theme Color:</label>
-        <select id="themeColor">
-            <option value="#3b82f6">Blue</option>
-            <option value="#8b5cf6">Purple</option>
-            <option value="#10b981">Green</option>
-        </select>
-        <button onclick="saveSettings()">Save</button>
-        <button onclick="toggleSettings()">Close</button>
+    <div id="fullscreen-message-overlay">
+        <p id="fullscreen-text"></p>
     </div>
 
-    <div id="nudge-screen">
-        <h1 id="nudge-message"></h1>
-        <button id="red-btn" class="nudge-btn" onclick="handleNudge(false)">Fine, I’ll get back to work, jerk!</button>
-        <button id="green-btn" class="nudge-btn" onclick="handleNudge(true)">I’m studying, you annoying nudge!</button>
-    </div>
+    <!-- Audio Elements -->
+    <audio id="audio-get-ready" loop src="https://www.dropbox.com/scl/fi/hrbitky0j4l92zya0gvrg/If-You-re-A-Gamer-This-Song-FOUND-You-4.mp3?rlkey=4kevn083g6iz20bcmh5o6kizw&st=c6pto1qp&dl=1"></audio>
+    <audio id="audio-session-music" loop></audio>
+    <audio id="audio-break-music" loop></audio>
+    <audio id="audio-break-over" src="https://www.dropbox.com/scl/fi/8gwxrqbx5ym1mtpsq3wjp/ElevenLabs_2025-05-16T05_11_55_Viraj-Dramatic-TV-Narration_pvc_sp87_s32_sb17_se0_b_m2.mp3?rlkey=9swp716gchv924ydsdn8sqpw9&st=hjd21l4p&dl=1"></audio>
+    <audio id="audio-break-start" src="https://www.dropbox.com/scl/fi/tnukseo2zksmyo1nnbv55/ElevenLabs_2025-05-16T05_13_43_Viraj-Dramatic-TV-Narration_pvc_sp100_s32_sb17_se0_b_m2.mp3?rlkey=aycq7ribjhv9sdrth5gilthxa&st=23v3h1su&dl=1"></audio>
 
     <script>
-        let workDuration = 25 * 60;
-        let breakDuration = 5 * 60;
-        let nudgeIntervalTime = 20 * 60 * 1000;
-        let timeLeft = workDuration;
-        let isRunning = false;
-        let isWorkSession = true;
+        // --- DOM Elements ---
+        const initialScreen = document.getElementById('initial-screen');
+        const sessionOptionsContainer = document.getElementById('session-options');
+        const loopSelectionScreen = document.getElementById('loop-selection');
+        const loopCountInput = document.getElementById('loop-count');
+        const startButton = document.getElementById('start-button');
+        const backToSessionSelectButton = document.getElementById('back-to-session-select');
+
+        const timerScreen = document.getElementById('timer-screen');
+        const currentPhaseDisplay = document.getElementById('current-phase-display');
+        const timerDisplay = document.getElementById('timer-display');
+        const currentLoopDisplay = document.getElementById('current-loop-display');
+        const pauseResumeButton = document.getElementById('pause-resume-button');
+        const stopButton = document.getElementById('stop-button');
+
+        const fullscreenMessageOverlay = document.getElementById('fullscreen-message-overlay');
+        const fullscreenText = document.getElementById('fullscreen-text');
+
+        // --- Audio Elements & URLs ---
+        const audioElements = {
+            getReady: document.getElementById('audio-get-ready'),
+            sessionMusic: document.getElementById('audio-session-music'),
+            breakMusic: document.getElementById('audio-break-music'),
+            breakOver: document.getElementById('audio-break-over'),
+            breakStart: document.getElementById('audio-break-start')
+        };
+        const sessionMusicTracks = [
+            "https://www.dropbox.com/scl/fi/5uqsgnjokpxhhaofkmx2g/chillcraft.mp3?rlkey=3l25hd8k4h8renrm2j3josvgp&st=ygtc6cxk&dl=1",
+            "https://www.dropbox.com/scl/fi/6gl1bhdz9pe8ymjyh0jgd/RevenantEntertainment-kataruma-dont-worry-ill-always-be-here-for-you.mp3?rlkey=ntodkwanh7by2r2nyuw7cht1x&st=z5o2ehqe&dl=1",
+            "https://www.dropbox.com/scl/fi/6gbti0c7ka2e3lc1kj895/Toxic-Drunker-a-playlist-to-romanticize-studying-physics-dark-academia-playlist.mp3?rlkey=xfo51y00j6tbuozey81c5cfub&st=1m54zf7k&dl=1"
+        ];
+        const breakMusicTracks = [
+            "https://www.dropbox.com/scl/fi/tamjmugo9ie0r0nar0ozr/Molls-Inc.-Fallen-Down-Reprise-but-I-recorded-it-off-real-8-bit-hardware-from-1983-and-makes-me-feel-nostalgic.mp3?rlkey=sam1dussjmf5jq4zlxj0hpe9r&st=bb4dos63&dl=1",
+            "https://www.dropbox.com/scl/fi/nqgmray2um9mjtm9stjk9/aria_math_credit_to_c4.mp3?rlkey=99e4kgsulvy1k738piy17iiye&st=aohxn24c&dl=1"
+        ];
+        let currentSessionMusicIndex = 0;
+        let currentBreakMusicIndex = 0;
+
+        // --- State Variables ---
+        let selectedSessionMinutes = 0;
+        let totalLoops = 0;
+        let currentLoopNumber = 0;
+        let currentPhase = 'idle';
+        let timeLeftSeconds = 0;
         let timerInterval = null;
-        let nudgeInterval = null;
-        let studyTopic = "your topic";
-        let isNudgeActive = false;
-        let nudgeEffect = "slide";
-        let distractionLog = [];
-        let lastMousePos = { x: 0, y: 0 };
-        let mouseMoveTimeout = null;
         let isPaused = false;
 
-        const nudgeMessages = [
-            "Are you studying <topic>, or are you just a lazy ass?",
-            "Focus on <topic>, you moron, or are you too dumb?",
-            "Hey, stupid! Is <topic> too hard for your tiny brain?",
-            "Stop slacking, idiot! Get back to <topic> now!",
-            "What’s wrong, lazy ass? Distracted from <topic> again?",
-            "Hey, moron! Why’d you move your mouse like a fool?",
-            "Switching tabs, you absolute idiot? Back to <topic>!"
+        // --- Constants ---
+        const GET_READY_DURATION_SECONDS = 5 * 60;
+        const BREAK_DURATION_SECONDS = 15 * 60;
+        // const GET_READY_DURATION_SECONDS = 3; // Test
+        // const BREAK_DURATION_SECONDS = 4; // Test
+        const TYPEWRITER_SPEED = 70; 
+
+        const sessionDefinitions = [
+            { label: "30 Mins", duration: 30 }, { label: "40 Mins", duration: 40 },
+            { label: "50 Mins", duration: 50 }, { label: "1 Hour", duration: 60 },
+            { label: "1.5 Hrs", duration: 90 }, { label: "2 Hrs", duration: 120 },
+            { label: "2.5 Hrs", duration: 150 }
         ];
 
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = seconds % 60;
-            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        // --- Screen Management ---
+        function showScreen(screenElement) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            screenElement.classList.remove('hidden');
         }
-
-        function updateTimerDisplay() {
-            document.getElementById('timer').textContent = formatTime(timeLeft);
-        }
-
-        function startTimer() {
-            if (!isRunning) {
-                isRunning = true;
-                timerInterval = setInterval(() => {
-                    if (!isPaused && timeLeft > 0) {
-                        timeLeft--;
-                        updateTimerDisplay();
-                    } else if (timeLeft <= 0) {
-                        isWorkSession = !isWorkSession;
-                        timeLeft = isWorkSession ? workDuration : breakDuration;
-                        updateTimerDisplay();
-                        if (!isWorkSession) {
-                            clearInterval(nudgeInterval);
-                            nudgeInterval = null;
-                        } else if (!nudgeInterval) {
-                            nudgeInterval = setInterval(checkNudge, nudgeIntervalTime);
-                        }
-                    }
-                }, 1000);
-
-                if (isWorkSession && !nudgeInterval) {
-                    nudgeInterval = setInterval(checkNudge, nudgeIntervalTime);
-                }
-            }
-        }
-
-        function pauseTimer() {
-            isPaused = true;
-        }
-
-        function resumeTimer() {
-            isPaused = false;
-        }
-
-        function resetTimer() {
-            isRunning = false;
-            isPaused = false;
-            clearInterval(timerInterval);
-            clearInterval(nudgeInterval);
-            nudgeInterval = null;
-            isWorkSession = true;
-            timeLeft = workDuration;
-            updateTimerDisplay();
-            hideNudge();
-        }
-
-        function getRandomNudgeMessage(isMouseMove = false, isTabSwitch = false) {
-            if (isMouseMove) return "Hey, moron! Why’d you move your mouse like a fool?";
-            if (isTabSwitch) return "Switching tabs, you absolute idiot? Back to <topic>!";
-            const randomIndex = Math.floor(Math.random() * (nudgeMessages.length - 2));
-            return nudgeMessages[randomIndex].replace("<topic>", studyTopic);
-        }
-
-        function checkNudge() {
-            if (isWorkSession && isRunning && !isNudgeActive && !isPaused) {
-                showNudge();
-            }
-        }
-
-        function showNudge(isMouseMove = false, isTabSwitch = false) {
-            isNudgeActive = true;
-            pauseTimer();
-            const nudgeScreen = document.getElementById('nudge-screen');
-            document.getElementById('nudge-message').textContent = getRandomNudgeMessage(isMouseMove, isTabSwitch);
-            nudgeScreen.style.display = 'flex';
-            nudgeScreen.className = `nudge-${nudgeEffect}-in`;
-            document.body.requestFullscreen().catch(err => console.log('Fullscreen failed:', err));
-            setTimeout(() => {
-                if (isNudgeActive) {
-                    window.location.href = 'about:blank'; // Strict browser lock
-                }
-            }, 8000);
-        }
-
-        function hideNudge() {
-            const nudgeScreen = document.getElementById('nudge-screen');
-            nudgeScreen.className = `nudge-${nudgeEffect}-out`;
-            setTimeout(() => {
-                nudgeScreen.style.display = 'none';
-                isNudgeActive = false;
-                resumeTimer();
-                if (document.fullscreenElement) {
-                    document.exitFullscreen();
-                }
-            }, 500);
-        }
-
-        function handleNudge(isStudying) {
-            const logEntry = {
-                time: new Date().toLocaleTimeString(),
-                topic: studyTopic,
-                response: isStudying ? "Studying" : "Distracted"
-            };
-            distractionLog.push(logEntry);
-            updateDistractionLog();
-            hideNudge();
-        }
-
-        function updateDistractionLog() {
-            const logDiv = document.getElementById('distraction-log');
-            logDiv.innerHTML = distractionLog.map(entry => 
-                `${entry.time}: ${entry.topic} - ${entry.response}`
-            ).join('<br>');
-        }
-
-        function toggleSettings() {
-            const settings = document.getElementById('settings');
-            settings.style.display = settings.style.display === 'none' ? 'block' : 'none';
-        }
-
-        function saveSettings() {
-            workDuration = parseInt(document.getElementById('workDuration').value) * 60;
-            breakDuration = parseInt(document.getElementById('breakDuration').value) * 60;
-            nudgeIntervalTime = parseInt(document.getElementById('nudgeInterval').value) * 60 * 1000;
-            studyTopic = document.getElementById('studyTopic').value || "your topic";
-            nudgeEffect = document.getElementById('nudgeEffect').value;
-            const themeColor = document.getElementById('themeColor').value;
-            timeLeft = isWorkSession ? workDuration : breakDuration;
-            updateTimerDisplay();
-            document.querySelectorAll('button').forEach(btn => {
-                btn.style.background = themeColor;
-                btn.style.transition = 'background-color 0.3s ease';
+        
+        // --- Initialization ---
+        function init() {
+            populateSessionButtons();
+            startButton.addEventListener('click', handleStartFullSession);
+            backToSessionSelectButton.addEventListener('click', () => {
+                handleStopSession(); // Ensure state is reset if going back
+                showScreen(initialScreen);
             });
-            toggleSettings();
-            if (isRunning && isWorkSession) {
-                clearInterval(nudgeInterval);
-                nudgeInterval = setInterval(checkNudge, nudgeIntervalTime);
+            pauseResumeButton.addEventListener('click', togglePauseResume);
+            stopButton.addEventListener('click', handleStopSession);
+
+            audioElements.breakOver.preload = "auto";
+            audioElements.breakStart.preload = "auto";
+            audioElements.getReady.preload = "auto";
+
+            showScreen(initialScreen); 
+        }
+
+        function populateSessionButtons() {
+            sessionOptionsContainer.innerHTML = '';
+            sessionDefinitions.forEach(session => {
+                const button = document.createElement('button');
+                button.textContent = session.label;
+                button.dataset.duration = session.duration;
+                button.addEventListener('click', () => selectSession(session.duration));
+                sessionOptionsContainer.appendChild(button);
+            });
+        }
+
+        function selectSession(duration) {
+            selectedSessionMinutes = duration;
+            showScreen(loopSelectionScreen);
+            loopCountInput.focus();
+        }
+
+        function goFullScreen() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen().catch(err => {});
+            } else if (elem.mozRequestFullScreen) { elem.mozRequestFullScreen();
+            } else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { elem.msRequestFullscreen(); }
+        }
+        
+        function exitFullScreen() {
+            if (document.exitFullscreen) { document.exitFullscreen();
+            } else if (document.mozCancelFullScreen) { document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) { document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { document.msExitFullscreen(); }
+        }
+
+        // --- Main Flow Control ---
+        function handleStartFullSession() {
+            const loops = parseInt(loopCountInput.value);
+            if (isNaN(loops) || loops < 1 || loops > 50) {
+                alert("Please enter a valid number of loops (1-50).");
+                return;
+            }
+            totalLoops = loops;
+            currentLoopNumber = 0;
+            isPaused = false;
+            pauseResumeButton.textContent = "Pause";
+
+            goFullScreen(); 
+            showScreen(timerScreen);
+            startGetReadyPhase();
+        }
+
+        function startGetReadyPhase() {
+            currentPhase = 'getReady';
+            timeLeftSeconds = GET_READY_DURATION_SECONDS;
+            updatePhaseDisplay("Get Ready");
+            updateLoopDisplay();
+            stopAllBackgroundMusic();
+            playAudio(audioElements.getReady);
+            startTimer(onGetReadyEnd);
+        }
+
+        function onGetReadyEnd() {
+            stopAudio(audioElements.getReady);
+            startNextLoopCycle();
+        }
+
+        function startNextLoopCycle() {
+            currentLoopNumber++;
+            if (currentLoopNumber > totalLoops) {
+                finishEntireSession();
+                return;
+            }
+            updateLoopDisplay();
+            startPomodoroPhase();
+        }
+
+        function startPomodoroPhase() {
+            currentPhase = 'pomodoro';
+            timeLeftSeconds = selectedSessionMinutes * 60;
+            // timeLeftSeconds = 5; // Test
+            updatePhaseDisplay(`Session ${currentLoopNumber}`);
+            stopAllBackgroundMusic();
+            playSessionMusic();
+            startTimer(onPomodoroEnd);
+        }
+
+        function onPomodoroEnd() {
+            stopAudio(audioElements.sessionMusic);
+            if (currentLoopNumber <= totalLoops) { // Check if it's the last loop or not
+                 showBreakStartMessage();
+            }
+            // If it was the last pomodoro of the last loop, finishEntireSession will be called by startNextLoopCycle
+        }
+
+        function showBreakStartMessage() {
+            currentPhase = 'message';
+            updatePhaseDisplay("Break Incoming");
+            playAudio(audioElements.breakStart);
+            showFullScreenMessageView("Break Time! Have some rest.", () => {});
+            audioElements.breakStart.onended = () => {
+                hideFullScreenMessageView();
+                startBreakPhase();
+            };
+        }
+
+        function startBreakPhase() {
+            currentPhase = 'break';
+            timeLeftSeconds = BREAK_DURATION_SECONDS;
+            updatePhaseDisplay("Break Time");
+            stopAllBackgroundMusic();
+            playBreakMusic();
+            startTimer(onBreakEnd);
+        }
+
+        function onBreakEnd() {
+            stopAudio(audioElements.breakMusic);
+            if (currentLoopNumber >= totalLoops) { // If this break was after the last pomodoro
+                finishEntireSession();
+            } else {
+                showBreakOverMessage();
+            }
+        }
+        
+        function showBreakOverMessage() {
+            currentPhase = 'message';
+            updatePhaseDisplay("Work Incoming");
+            playAudio(audioElements.breakOver);
+            showFullScreenMessageView("Break is over. Get back to study!", () => {});
+             audioElements.breakOver.onended = () => {
+                hideFullScreenMessageView();
+                startNextLoopCycle(); // This will increment loop and start next pomodoro
+            };
+        }
+
+        function finishEntireSession() {
+            currentPhase = 'idle';
+            stopAllAudio();
+            updateTimerDisplayValue(0);
+            updatePhaseDisplay("Session Complete!");
+            currentLoopDisplay.textContent = "All loops finished!";
+            showFullScreenMessageView("Congratulations! Session Complete!", () => {
+                setTimeout(() => {
+                    hideFullScreenMessageView();
+                    showScreen(initialScreen);
+                    exitFullScreen(); 
+                }, 3000);
+            });
+        }
+
+        function handleStopSession() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            currentPhase = 'idle';
+            isPaused = false;
+            stopAllAudio();
+            hideFullScreenMessageView(); 
+            showScreen(initialScreen); // Always go back to initial screen on stop
+            if (document.fullscreenElement) { // Only exit if in fullscreen
+                 exitFullScreen();
+            }
+            updateTimerDisplayValue(0);
+            currentPhaseDisplay.textContent = "Session Timer"; // Reset default title
+            currentLoopDisplay.textContent = "";
+            selectedSessionMinutes = 0; // Reset selection
+            totalLoops = 0;
+            currentLoopNumber = 0;
+        }
+
+        // --- Timer Logic ---
+        function startTimer(onEndCallback) {
+            clearInterval(timerInterval);
+            isPaused = false;
+            pauseResumeButton.textContent = "Pause";
+            pauseResumeButton.disabled = false;
+            updateTimerDisplay(); 
+
+            timerInterval = setInterval(() => {
+                if (isPaused) return;
+                timeLeftSeconds--;
+                updateTimerDisplay();
+                if (timeLeftSeconds <= 0) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                    if (onEndCallback) onEndCallback();
+                }
+            }, 1000);
+        }
+
+        function togglePauseResume() {
+            if (currentPhase === 'message' || currentPhase === 'idle') return; // Don't allow pause during messages
+
+            if (isPaused) {
+                isPaused = false;
+                pauseResumeButton.textContent = "Pause";
+                if (currentPhase === 'getReady' && audioElements.getReady.paused) playAudio(audioElements.getReady, true);
+                else if (currentPhase === 'pomodoro' && audioElements.sessionMusic.paused) playAudio(audioElements.sessionMusic, true);
+                else if (currentPhase === 'break' && audioElements.breakMusic.paused) playAudio(audioElements.breakMusic, true);
+            } else {
+                isPaused = true;
+                pauseResumeButton.textContent = "Resume";
+                if (currentPhase === 'getReady') audioElements.getReady.pause();
+                else if (currentPhase === 'pomodoro') audioElements.sessionMusic.pause();
+                else if (currentPhase === 'break') audioElements.breakMusic.pause();
+            }
+        }
+        
+        // --- UI Updates ---
+        function updateTimerDisplay() {
+            updateTimerDisplayValue(timeLeftSeconds);
+        }
+        function updateTimerDisplayValue(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            const timeString = `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+            timerDisplay.textContent = timeString;
+            document.title = `${timeString} - ${currentPhaseDisplay.textContent}`;
+        }
+
+        function updatePhaseDisplay(phaseText) {
+            currentPhaseDisplay.textContent = phaseText;
+        }
+
+        function updateLoopDisplay() {
+            if (totalLoops > 0 && currentPhase !== 'getReady' && currentLoopNumber > 0) {
+                 currentLoopDisplay.textContent = `Loop: ${currentLoopNumber} / ${totalLoops}`;
+            } else if (currentPhase === 'getReady' && totalLoops > 0) {
+                 currentLoopDisplay.textContent = `Preparing for ${totalLoops} loop(s)`;
+            } else {
+                currentLoopDisplay.textContent = "";
             }
         }
 
-        // Mouse movement detection
-        document.addEventListener('mousemove', (e) => {
-            if (isRunning && isWorkSession && !isNudgeActive && !isPaused) {
-                const dx = Math.abs(e.clientX - lastMousePos.x);
-                const dy = Math.abs(e.clientY - lastMousePos.y);
-                if (dx > 50 || dy > 50) { // Detect significant movement
-                    clearTimeout(mouseMoveTimeout);
-                    mouseMoveTimeout = setTimeout(() => {
-                        showNudge(true);
-                    }, 500);
+        function showFullScreenMessageView(text, typewriterCallback) {
+            fullscreenText.textContent = ''; 
+            fullscreenMessageOverlay.classList.add('visible');
+            typeWriterEffect(fullscreenText, text, TYPEWRITER_SPEED, typewriterCallback);
+        }
+
+        function hideFullScreenMessageView() {
+            fullscreenMessageOverlay.classList.remove('visible');
+            setTimeout(() => { fullscreenText.textContent = ''; }, 500); 
+        }
+
+        function typeWriterEffect(element, text, speed, callback) {
+            let i = 0;
+            element.innerHTML = ""; 
+            function type() {
+                if (i < text.length) {
+                    element.innerHTML += text.charAt(i);
+                    i++;
+                    setTimeout(type, speed);
+                } else if (callback) {
+                    callback();
                 }
-                lastMousePos = { x: e.clientX, y: e.clientY };
             }
-        });
+            type();
+        }
 
-        // Tab switch detection
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden && isRunning && isWorkSession && !isNudgeActive && !isPaused) {
-                showNudge(false, true);
+        // --- Audio Control ---
+        function playAudio(audioElement, resume = false) { // Added resume flag
+            if (audioElement) {
+                if(!resume) audioElement.currentTime = 0; // Only reset time if not resuming
+                audioElement.play().catch(error => {
+                    if (error.name === "NotAllowedError") {
+                        console.warn("Audio autoplay was prevented.");
+                    } else { console.error("Audio play error:", error); }
+                });
             }
-        });
+        }
+        function stopAudio(audioElement) {
+            if (audioElement) { audioElement.pause(); audioElement.currentTime = 0; }
+        }
+        function stopAllBackgroundMusic() {
+            stopAudio(audioElements.getReady);
+            stopAudio(audioElements.sessionMusic);
+            stopAudio(audioElements.breakMusic);
+        }
+        function stopAllAudio() {
+            stopAllBackgroundMusic();
+            stopAudio(audioElements.breakStart);
+            stopAudio(audioElements.breakOver);
+        }
+        function playSessionMusic() {
+            if (sessionMusicTracks.length > 0) {
+                audioElements.sessionMusic.src = sessionMusicTracks[currentSessionMusicIndex];
+                playAudio(audioElements.sessionMusic);
+                currentSessionMusicIndex = (currentSessionMusicIndex + 1) % sessionMusicTracks.length;
+            }
+        }
+        function playBreakMusic() {
+            if (breakMusicTracks.length > 0) {
+                audioElements.breakMusic.src = breakMusicTracks[currentBreakMusicIndex];
+                playAudio(audioElements.breakMusic);
+                currentBreakMusicIndex = (currentBreakMusicIndex + 1) % breakMusicTracks.length;
+            }
+        }
 
-        updateTimerDisplay();
+        // --- Start the app ---
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
