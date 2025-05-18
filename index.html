@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Focus Session Timer | Polished</title>
+    <!-- FAVICONS START -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <!-- FAVICONS END -->
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -472,10 +478,10 @@
 
             if (currentPhase === 'pomodoro' && sessionMusicTracks.length > 1) {
                 stopAudio(audioElements.sessionMusic);
-                playSessionMusic(); 
+                playSessionMusic(); // Will play immediately
             } else if (currentPhase === 'break' && breakMusicTracks.length > 1) {
                 stopAudio(audioElements.breakMusic);
-                playBreakMusic(); 
+                playBreakMusic(); // Will play immediately
             }
         }
 
@@ -519,7 +525,8 @@
             timeLeftSeconds = GET_READY_DURATION_SECONDS;
             updatePhaseDisplay("Get Ready");
             updateLoopDisplay(); 
-            stopAllBackgroundMusic();
+            stopAllBackgroundMusic(); // Stop other potential music
+            clearMusicDelayTimeout(); // Clear any existing music delay
             playAudio(audioElements.getReady); 
             updateChangeSongButtonVisibility();
             startTimer(onGetReadyEnd);
@@ -538,10 +545,22 @@
             updateLoopDisplay();
             timeLeftSeconds = selectedSessionMinutes * 60;
             updateTimerDisplay();
-            stopAllBackgroundMusic();
-            playSessionMusic(); // Directly play session music for the first pomodoro
+            stopAllBackgroundMusic(); // Ensure no other bg music is playing
             updateChangeSongButtonVisibility();
+            
+            // Start timer immediately
             startTimer(onPomodoroEnd);
+
+            // Schedule session music after delay
+            if (!isPaused) {
+                clearMusicDelayTimeout();
+                musicDelayTimeoutId = setTimeout(() => {
+                    if (currentPhase === 'pomodoro' && !isPaused) {
+                        playSessionMusic();
+                    }
+                    musicDelayTimeoutId = null;
+                }, MUSIC_START_DELAY_MS);
+            }
         }
 
         function onPomodoroEnd() {
@@ -556,6 +575,7 @@
             currentLoopDisplay.textContent = "Taking a break...";
             updateChangeSongButtonVisibility(); 
             stopAllBackgroundMusic();
+            clearMusicDelayTimeout();
             playAudio(audioElements.breakStart);
             showFullScreenMessageView("Break Time! Have some rest.", () => {});
 
@@ -574,12 +594,18 @@
             updateTimerDisplay(); 
             updateChangeSongButtonVisibility(); 
 
-            if (isPaused) return; 
+            if (isPaused) { // If paused when trying to enter this phase, timer won't start until resume
+                return;
+            }
+            
+            // Start timer for the break phase immediately
+            startTimer(onBreakEnd); 
 
+            // Schedule break music after delay
+            clearMusicDelayTimeout();
             musicDelayTimeoutId = setTimeout(() => {
                 if (currentPhase === 'break' && !isPaused) {
                     playBreakMusic();
-                    startTimer(onBreakEnd); 
                 }
                 musicDelayTimeoutId = null;
             }, MUSIC_START_DELAY_MS);
@@ -602,6 +628,7 @@
             currentLoopDisplay.textContent = `Preparing for session ${currentLoopNumber + 1}...`;
             updateChangeSongButtonVisibility(); 
             stopAllBackgroundMusic();
+            clearMusicDelayTimeout();
             playAudio(audioElements.breakOver);
             showFullScreenMessageView("Break is over. Get back to study!", () => {});
 
@@ -621,12 +648,18 @@
             updateTimerDisplay(); 
             updateChangeSongButtonVisibility(); 
 
-            if (isPaused) return;
+            if (isPaused) { // If paused, timer won't start until resume
+                return;
+            }
 
+            // Start timer for the pomodoro phase immediately
+            startTimer(onPomodoroEnd); 
+
+            // Schedule session music after delay
+            clearMusicDelayTimeout();
             musicDelayTimeoutId = setTimeout(() => {
                 if (currentPhase === 'pomodoro' && !isPaused) {
                     playSessionMusic();
-                    startTimer(onPomodoroEnd); 
                 }
                 musicDelayTimeoutId = null;
             }, MUSIC_START_DELAY_MS);
@@ -674,6 +707,8 @@
             clearInterval(timerInterval); 
             updateTimerDisplay(); 
 
+            if (isPaused) return; // Don't start if paused, resume will handle it.
+
             timerInterval = setInterval(() => {
                 if (isPaused) return;
                 timeLeftSeconds--;
@@ -693,14 +728,45 @@
 
             if (isPaused) {
                 pauseResumeButton.textContent = "Resume";
-                if (currentPhase === 'getReady') audioElements.getReady.pause();
+                // No need to clear musicDelayTimeoutId here; the timeout callback checks isPaused.
+                if (currentPhase === 'getReady' && !audioElements.getReady.paused) audioElements.getReady.pause();
                 else if (currentPhase === 'pomodoro' && audioElements.sessionMusic.src && !audioElements.sessionMusic.paused) audioElements.sessionMusic.pause();
                 else if (currentPhase === 'break' && audioElements.breakMusic.src && !audioElements.breakMusic.paused) audioElements.breakMusic.pause();
             } else {
                 pauseResumeButton.textContent = "Pause";
+                // If timer was not running due to pause, start it for the current phase
+                if (!timerInterval && timeLeftSeconds > 0) {
+                    if (currentPhase === 'getReady') startTimer(onGetReadyEnd);
+                    else if (currentPhase === 'pomodoro') startTimer(onPomodoroEnd);
+                    else if (currentPhase === 'break') startTimer(onBreakEnd);
+                }
+
+                // Resume or start music if appropriate
                 if (currentPhase === 'getReady' && audioElements.getReady.paused) playAudio(audioElements.getReady, true);
-                else if (currentPhase === 'pomodoro' && audioElements.sessionMusic.paused) playAudio(audioElements.sessionMusic, true);
-                else if (currentPhase === 'break' && audioElements.breakMusic.paused) playAudio(audioElements.breakMusic, true);
+                else if (currentPhase === 'pomodoro') {
+                    if (audioElements.sessionMusic.paused && audioElements.sessionMusic.src) playAudio(audioElements.sessionMusic, true);
+                    else if (!audioElements.sessionMusic.src && musicDelayTimeoutId === null) { // Music never started and delay passed
+                        // This condition might be tricky; for now, rely on timeout or direct play.
+                        // Potentially re-trigger music after delay if it was missed.
+                        // For simplicity, current logic: if music delay fired while paused, music is skipped for that segment.
+                        // If it was explicitly paused, it resumes.
+                        // Or re-initiate the music scheduling if it was missed:
+                        clearMusicDelayTimeout();
+                         musicDelayTimeoutId = setTimeout(() => {
+                            if (currentPhase === 'pomodoro' && !isPaused) { playSessionMusic(); }
+                                musicDelayTimeoutId = null;
+                        }, MUSIC_START_DELAY_MS);
+                    }
+                } else if (currentPhase === 'break') {
+                    if (audioElements.breakMusic.paused && audioElements.breakMusic.src) playAudio(audioElements.breakMusic, true);
+                    else if (!audioElements.breakMusic.src && musicDelayTimeoutId === null) {
+                         clearMusicDelayTimeout();
+                         musicDelayTimeoutId = setTimeout(() => {
+                            if (currentPhase === 'break' && !isPaused) { playBreakMusic(); }
+                                musicDelayTimeoutId = null;
+                        }, MUSIC_START_DELAY_MS);
+                    }
+                }
             }
             updateChangeSongButtonVisibility(); 
         }
@@ -772,7 +838,7 @@
                     playPromise.catch(error => {
                         if (error.name === "NotAllowedError") {
                             console.warn("Audio autoplay was prevented. User interaction might be needed.");
-                        } else { console.error("Audio play error:", error); }
+                        } else { console.error("Audio play error:", error, "on element:", audioElement); }
                     });
                 }
             }
@@ -792,7 +858,7 @@
         }
         
         function playSessionMusic() {
-            clearMusicDelayTimeout(); 
+            // No need to clear musicDelayTimeout here as this is usually called *from* the timeout or directly by user
             if (sessionMusicTracks.length > 0) {
                 audioElements.sessionMusic.src = sessionMusicTracks[currentSessionMusicIndex];
                 playAudio(audioElements.sessionMusic);
@@ -801,7 +867,7 @@
             updateChangeSongButtonVisibility();
         }
         function playBreakMusic() {
-            clearMusicDelayTimeout(); 
+            // No need to clear musicDelayTimeout here
             if (breakMusicTracks.length > 0) {
                 audioElements.breakMusic.src = breakMusicTracks[currentBreakMusicIndex];
                 playAudio(audioElements.breakMusic);
